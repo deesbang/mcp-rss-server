@@ -1,0 +1,8 @@
+cd C:\Users\Ruslan\mcp-rss-server
+@'
+{
+  "jsonrpc": "2.0",
+  "method": "tools/list",
+  "id": 1
+}
+'@ | Out-File -FilePath test-list.json -Encoding UTF8
