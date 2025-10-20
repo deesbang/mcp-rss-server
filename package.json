@@ -2,20 +2,19 @@
   "name": "mcp-rss-server",
   "version": "1.0.0",
   "type": "module",
-  "description": "",
+  "description": "MCP RSS Server for fetching and generating content from feeds",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx server.ts",
     "build": "tsc",
-  "postbuild": "node -e \"const fs = require('fs'); console.log('dist:'); fs.readdirSync('./dist').forEach(f => console.log(f)); console.log('dist/tools:'); fs.readdirSync('./dist/tools').forEach(f => console.log(f)); console.log('Imports in dist/server.js:'); fs.readFileSync('./dist/server.js', 'utf8').split('\\n').forEach((line, i) => { if (line.includes(`from './tools/`)) console.log(`${i+1}: ${line}`); });\"",
+    "postbuild": "node -e \"const fs = require('fs'); console.log('dist:'); fs.readdirSync('./dist').forEach(f => console.log(f)); console.log('dist/tools:'); fs.readdirSync('./dist/tools').forEach(f => console.log(f)); console.log('Imports in dist/server.js:'); fs.readFileSync('./dist/server.js', 'utf8').split('\\n').forEach((line, i) => { if (line.includes(\\\"from './tools/\\\")) console.log((i+1) + ': ' + line); });\"",
     "start": "node --enable-source-maps dist/server.js"
-    
   },
-   "engines": { 
+  "engines": {
     "node": "22.x"
-   },
-  "keywords": [],
+  },
+  "keywords": ["mcp", "rss", "ai", "memes", "stories"],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -23,8 +22,8 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "rss-parser": "^3.13.0",
-    "zod": "3.22.4",  
-    "zod-to-json-schema": "3.22.4"  
+    "zod": "3.22.4",
+    "zod-to-json-schema": "3.22.4"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -33,6 +32,4 @@
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
-
-  
 }
