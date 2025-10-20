@@ -8,8 +8,9 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "types": ["node"],
+    "outDir": "dist"
   },
-  "include": ["server.ts"],
+  "include": ["server.ts", "tools/**/*.ts"],  // 👈 Updated: Include tools
   "ts-node": { "esm": true }
 }
