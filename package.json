@@ -8,8 +8,13 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+  "postbuild": "node -e \"const fs = require('fs'); console.log('dist:'); fs.readdirSync('./dist').forEach(f => console.log(f)); console.log('dist/tools:'); fs.readdirSync('./dist/tools').forEach(f => console.log(f)); console.log('Imports in dist/server.js:'); fs.readFileSync('./dist/server.js', 'utf8').split('\\n').forEach((line, i) => { if (line.includes(`from './tools/`)) console.log(`${i+1}: ${line}`); });\"",
+    "start": "node --enable-source-maps dist/server.js"
+    
   },
+   "engines": { 
+    "node": "22.x"
+   },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -28,4 +33,6 @@
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
+
+  
 }

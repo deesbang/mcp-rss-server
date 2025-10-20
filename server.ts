@@ -1,21 +1,25 @@
-// server.ts (updated snippet)
 import express from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import cors from 'cors';
 
-// server.ts (imports section)
+// Global error handlers (for Render trace)
+process.on('unhandledRejection', (r) => console.error('UNHANDLED REJECTION', r));
+process.on('uncaughtException', (e) => { console.error('UNCAUGHT EXCEPTION', e); process.exit(1); });
+
+// Imports (all .js, case-match filenames)
 import { registerFetchMemes } from './tools/fetchMemes.js';
-import { registerFetchStories } from './tools/fetchStories.js';  // 👈 Fixed: Added .js
-import { registerFetchDDG } from './tools/fetchDDG.js';  // 👈 MUST have .js for ESM resolution
-import { registerGeneratePostsFromRss } from './tools/generatePostsFromRss.js';  // 👈 .js for ESM
+import { registerFetchStories } from './tools/fetchStories.js';
+import { registerFetchDDG } from './tools/fetchDDG.js';
+import { registerGeneratePostsFromRss } from './tools/generatePostsFromRss.js';
 
 // Create MCP Server
 const server = new McpServer({
   name: 'rss-mcp-server',
   version: '1.0.0'
 });
-// Register tools (wrapped in try/catch for debug)
+
+// Register tools (try/catch for debug)
 try {
   registerFetchMemes(server);
   console.log('Memes tool registered');
@@ -28,8 +32,6 @@ try {
 } catch (regError) {
   console.error('Tool registration error:', regError);
 }
-
-// ... rest of the file unchanged
 
 // Express Setup
 const app = express();
@@ -64,6 +66,7 @@ app.post('/mcp', async (req: express.Request, res: express.Response) => {
     }
   }
 });
+
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 console.log(`Starting server on PORT: ${PORT}`);
