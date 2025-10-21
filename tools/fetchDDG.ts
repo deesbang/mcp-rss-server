@@ -1,6 +1,6 @@
-// tools/fetchDDG.ts
+// tools/fetchDDG.ts (Fixed: Extract args from request.params.arguments)
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import Parser from 'rss-parser';  // 👈 Reuse RSS parser (already in deps)
+import Parser from 'rss-parser';
 
 export function registerFetchDDG(server: McpServer) {
   server.tool('fetch_ddg_search', {
@@ -11,7 +11,7 @@ export function registerFetchDDG(server: McpServer) {
       properties: {
         query: {
           type: 'string',
-          description: 'Search query'  // 👈 No default here—force pass
+          description: 'Search query'
         },
         count: {
           type: 'number',
@@ -19,7 +19,7 @@ export function registerFetchDDG(server: McpServer) {
           description: 'Max results'
         }
       },
-      required: ['query']  // 👈 Require query to avoid defaults
+      required: ['query']  // Keep required for safety
     },
     outputSchema: {
       type: 'object',
@@ -42,18 +42,19 @@ export function registerFetchDDG(server: McpServer) {
       },
       required: ['results']
     }
-  }, async (args) => {
-    console.log('fetchDDG args received:', args);  // 👈 Debug: Log incoming args
-    const query = args.query;  // 👈 No default—error if missing
+  }, async function handler(request) {  // 👈 Fixed: Full request, not args
+    const args = request.params?.arguments || {};  // 👈 Extract tool args
+    console.log('fetchDDG tool args:', args);  // 👈 Debug: Now shows {query: 'charlie kirk'}
+    const query = args.query;
     const count = args.count || 10;
     if (!query) {
-      throw new Error('Query required');  // 👈 Fail fast
+      throw new Error('Query required');  // Fail if missing
     }
     const parser = new Parser();
     let results: any[] = [];
     try {
-      const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}&format=rss`;  // 👈 Drop &count (Bing ignores)
-      console.log(`Bing RSS URL: ${bingUrl}`);  // Debug
+      const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}&format=rss`;
+      console.log(`Bing RSS URL: ${bingUrl}`);
       const feed = await parser.parseURL(bingUrl);
       const items = (feed.items || []).slice(0, count);
       results = items.map((item: any) => ({
@@ -62,11 +63,11 @@ export function registerFetchDDG(server: McpServer) {
         link: item.link || '#',
         pubDate: item.pubDate || '',
         _source: 'Bing',
-        thumbnail: null  // Enhance below
+        thumbnail: null
       }));
-      console.log(`Bing Search: ${results.length} results for "${query}"`);  // Debug
+      console.log(`Bing Search: ${results.length} results for "${query}"`);
 
-      // Enhance top result with image (DDG images fallback if needed)
+      // Enhance top result with image
       if (results.length > 0 && !results[0].thumbnail) {
         const imgUrl = `https://api.duckduckgo.com/?q=images+${encodeURIComponent(query)}&format=json&no_html=1`;
         try {
@@ -76,9 +77,8 @@ export function registerFetchDDG(server: McpServer) {
             results[0].thumbnail = imgData.RelatedTopics[0].Icon.URL;
             console.log('Enhanced top thumb:', results[0].thumbnail);
           } else {
-            // 👈 Switch to reliable placeholder (placehold.co—no DNS issues)
             results[0].thumbnail = `https://placehold.co/320x180/4A90E2/FFFFFF?text=${encodeURIComponent(query.slice(0, 20))}`;
-            console.log('Used placehold.co thumb');
+            console.log('Used placehold.co thumb for:', query.slice(0, 20));
           }
         } catch (imgE) {
           console.warn('Image enhancement failed:', imgE);
@@ -87,7 +87,7 @@ export function registerFetchDDG(server: McpServer) {
       }
     } catch (e) {
       console.warn(`Bing search failed:`, e);
-      results = [];
+      results = [];  // Empty on fail
     }
     const output = { results: results.slice(0, count) };
 

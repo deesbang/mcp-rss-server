@@ -11,7 +11,7 @@ export function registerFetchStories(server: McpServer) {
       properties: {
         count: {
           type: 'number',
-          default: 10,
+          default: 40,
           description: 'Number of stories to fetch'
         },
         genre: {
@@ -43,7 +43,7 @@ export function registerFetchStories(server: McpServer) {
       required: ['stories']
     }
   }, async (args) => {
-    const { count = 10, genre = '0' } = args;
+    const { count = 40, genre = '' } = args;
     const genreLower = genre.toLowerCase();
     const parser = new Parser({
       customFields: {
@@ -134,7 +134,7 @@ export function registerFetchStories(server: McpServer) {
         thumbnail?: string | null;
       }
 
-      const stories: StoryItem[] = items.slice(genre, genre + count).map((item: any) => ({
+      const stories: StoryItem[] = items.slice(0, count).map((item: any) => ({
         title: item.title || 'Untitled Story',
         description: item.contentSnippet || item.description || '',
         link: item.link || '#',
