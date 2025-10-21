@@ -11,8 +11,7 @@ export function registerFetchDDG(server: McpServer) {
       properties: {
         query: {
           type: 'string',
-          default: 'AI breakthroughs 2025',
-          description: 'Search query'
+          description: 'Search query'  // 👈 No default here—force pass
         },
         count: {
           type: 'number',
@@ -20,7 +19,7 @@ export function registerFetchDDG(server: McpServer) {
           description: 'Max results'
         }
       },
-      required: []
+      required: ['query']  // 👈 Require query to avoid defaults
     },
     outputSchema: {
       type: 'object',
@@ -44,11 +43,16 @@ export function registerFetchDDG(server: McpServer) {
       required: ['results']
     }
   }, async (args) => {
-    const { query = 'AI breakthroughs 2025', count = 10 } = args;
-    const parser = new Parser();  // Reuse RSS parser
+    console.log('fetchDDG args received:', args);  // 👈 Debug: Log incoming args
+    const query = args.query;  // 👈 No default—error if missing
+    const count = args.count || 10;
+    if (!query) {
+      throw new Error('Query required');  // 👈 Fail fast
+    }
+    const parser = new Parser();
     let results: any[] = [];
     try {
-      const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}&count=${count}&format=rss`;
+      const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}&format=rss`;  // 👈 Drop &count (Bing ignores)
       console.log(`Bing RSS URL: ${bingUrl}`);  // Debug
       const feed = await parser.parseURL(bingUrl);
       const items = (feed.items || []).slice(0, count);
@@ -61,6 +65,7 @@ export function registerFetchDDG(server: McpServer) {
         thumbnail: null  // Enhance below
       }));
       console.log(`Bing Search: ${results.length} results for "${query}"`);  // Debug
+
       // Enhance top result with image (DDG images fallback if needed)
       if (results.length > 0 && !results[0].thumbnail) {
         const imgUrl = `https://api.duckduckgo.com/?q=images+${encodeURIComponent(query)}&format=json&no_html=1`;
@@ -71,12 +76,13 @@ export function registerFetchDDG(server: McpServer) {
             results[0].thumbnail = imgData.RelatedTopics[0].Icon.URL;
             console.log('Enhanced top thumb:', results[0].thumbnail);
           } else {
-            results[0].thumbnail = `https://via.placeholder.com/320x180/4A90E2/FFFFFF?text=${encodeURIComponent(query.slice(0, 20))}`;
-            console.log('Used placeholder thumb');
+            // 👈 Switch to reliable placeholder (placehold.co—no DNS issues)
+            results[0].thumbnail = `https://placehold.co/320x180/4A90E2/FFFFFF?text=${encodeURIComponent(query.slice(0, 20))}`;
+            console.log('Used placehold.co thumb');
           }
         } catch (imgE) {
           console.warn('Image enhancement failed:', imgE);
-          results[0].thumbnail = `https://via.placeholder.com/320x180/4A90E2/FFFFFF?text=${encodeURIComponent(query.slice(0, 20))}`;
+          results[0].thumbnail = `https://placehold.co/320x180/4A90E2/FFFFFF?text=${encodeURIComponent(query.slice(0, 20))}`;
         }
       }
     } catch (e) {

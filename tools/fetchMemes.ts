@@ -39,7 +39,7 @@ export function registerFetchMemes(server: McpServer) {
       required: ['memes']
     }
   }, async (args) => {
-    const { count = 10 } = args;
+    const { count = 10, offset = 0 } = args;
     const parser = new Parser({
       customFields: {
         item: [
@@ -122,7 +122,7 @@ export function registerFetchMemes(server: McpServer) {
     for (const url of memeFeeds) {
       try {
         const feed = await parser.parseURL(url);
-        const memes: MemeItem[] = (feed.items || []).slice(0, count).map((item: any) => ({
+        const memes: MemeItem[] = (feed.items || []).slice(offset, offset + count).map((item: any) => ({
           title: item.title || 'Untitled Meme',
           description: item.contentSnippet || item.description || '',
           link: item.link || '#',

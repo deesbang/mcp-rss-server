@@ -43,7 +43,7 @@ export function registerFetchStories(server: McpServer) {
       required: ['stories']
     }
   }, async (args) => {
-    const { count = 10, genre = '' } = args;
+    const { count = 10, genre = '0' } = args;
     const genreLower = genre.toLowerCase();
     const parser = new Parser({
       customFields: {
@@ -134,7 +134,7 @@ export function registerFetchStories(server: McpServer) {
         thumbnail?: string | null;
       }
 
-      const stories: StoryItem[] = items.slice(0, count).map((item: any) => ({
+      const stories: StoryItem[] = items.slice(genre, genre + count).map((item: any) => ({
         title: item.title || 'Untitled Story',
         description: item.contentSnippet || item.description || '',
         link: item.link || '#',
