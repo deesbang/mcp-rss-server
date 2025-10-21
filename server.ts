@@ -1,13 +1,14 @@
 import express from 'express';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import cors from 'cors';
 
-// Global error handlers (for Render trace)
-process.on('unhandledRejection', (r) => console.error('UNHANDLED REJECTION', r));
-process.on('uncaughtException', (e) => { console.error('UNCAUGHT EXCEPTION', e); process.exit(1); });
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
-// Imports (all .js, case-match filenames)
+// Global error handlers: log only (don’t exit)
+process.on('unhandledRejection', (r) => console.error('UNHANDLED REJECTION', r));
+process.on('uncaughtException', (e) => console.error('UNCAUGHT EXCEPTION', e));
+
+// Tool registrations
 import { registerFetchMemes } from './tools/fetchMemes.js';
 import { registerFetchStories } from './tools/fetchStories.js';
 import { registerFetchDDG } from './tools/fetchDDG.js';
@@ -19,7 +20,7 @@ const server = new McpServer({
   version: '1.0.0'
 });
 
-// Register tools (try/catch for debug)
+// Register tools (modular!)
 try {
   registerFetchMemes(server);
   console.log('Memes tool registered');
@@ -42,6 +43,10 @@ app.use(cors({
   exposedHeaders: ['Mcp-Session-Id']
 }));
 app.use(express.json({ limit: '10mb' }));
+
+// Health endpoints (for Render)
+app.get('/', (_req, res) => res.send('mcp-rss-server OK'));
+app.get('/healthz', (_req, res) => res.type('text/plain').send('ok'));
 
 // MCP Endpoint
 app.post('/mcp', async (req: express.Request, res: express.Response) => {
@@ -67,12 +72,10 @@ app.post('/mcp', async (req: express.Request, res: express.Response) => {
   }
 });
 
-
 const PORT = parseInt(process.env.PORT || '3000', 10);
-console.log(`Starting server on PORT: ${PORT}`);
-app.listen(PORT, () => {
-  console.log(`MCP RSS Server (Modular) running at http://localhost:${PORT}`);
-  console.log(`Test: Invoke-RestMethod -Uri http://localhost:${PORT}/mcp -Method Post -Body '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"fetch_memes","arguments":{"count":1}},"id":2}' -ContentType "application/json" -Headers @{'Accept'='application/json, text/event-stream'}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`MCP RSS Server (Modular) running at http://0.0.0.0:${PORT}`);
+  console.log(`Test: curl -X POST http://localhost:${PORT}/mcp -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'`);
 }).on('error', (error: Error) => {
   console.error('Server error:', error);
   process.exit(1);
